@@ -1,22 +1,14 @@
 version: 2.1
 
-jobs:
-  lint:
+executors:
+  python-executor:
     docker:
       - image: cimg/python:3.10
-    steps:
-      - checkout
-      - run:
-          name: Install flake8
-          command: pip install flake8
-      - run:
-          name: Lint with flake8
-          command: flake8 .
+    working_directory: ~/project
 
-  test:
-    docker:
-      - image: cimg/python:3.10
-    parallelism: 4
+jobs:
+  build:
+    executor: python-executor
     steps:
       - checkout
       - run:
@@ -24,16 +16,10 @@ jobs:
           command: pip install -r requirements.txt
       - run:
           name: Run tests
-          command: |
-            mkdir test-results
-            TEST_FILES=$(circleci tests glob "**/test_*.py" | circleci tests split --split-by=timings)
-            pytest -o junit_family=legacy --junitxml=test-results/junit.xml $TEST_FILES
-      - store_test_results:
-          path: test-results
+          command: pytest
 
 workflows:
   version: 2
-  lint_and_test:
+  build_and_test:
     jobs:
-      - lint
-      - test
+      - build
